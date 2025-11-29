@@ -9,18 +9,20 @@
         :root {
             --font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Helvetica Neue", "Hiragino Sans", sans-serif;
             --text-main: #ffffff;
-            --text-sub: rgba(255, 255, 255, 0.55);
+            --text-sub: rgba(255, 255, 255, 0.6);
             --bg-base: #000;
             --ease-apple: cubic-bezier(0.25, 1, 0.5, 1);
         }
 
-        /* --- 1. 画面ロック (最強設定) --- */
+        /* --- 1. 画面ロック (スクロール・バウンス防止の根幹) --- */
         html, body {
             margin: 0; padding: 0; width: 100%; height: 100%;
             background: var(--bg-base); color: var(--text-main);
             font-family: var(--font);
-            overflow: hidden; position: fixed; inset: 0; 
-            touch-action: none; user-select: none;
+            overflow: hidden; 
+            position: fixed; inset: 0; 
+            touch-action: none; /* 全てのタッチジェスチャーをデフォルトで無効化 */
+            user-select: none; -webkit-user-select: none;
         }
 
         /* 背景 */
@@ -33,7 +35,7 @@
             pointer-events: none;
         }
 
-        /* メインコンテナ */
+        /* --- メインコンテナ (Flexboxベースの縦レイアウト) --- */
         .container {
             width: 100%; height: 100%;
             padding: max(20px, env(safe-area-inset-top)) 24px max(30px, env(safe-area-inset-bottom)) 24px;
@@ -41,23 +43,26 @@
             display: flex; flex-direction: column;
         }
 
-        /* === スマホ用レイアウト (縦) === */
-        .player-side { display: contents; }
+        /* === レイアウト構造 (Flex Order / Grid Area) === */
+        
+        .player-side { display: contents; } /* スマホ向けフラット化 */
         
         #artwork-wrapper { order: 1; width: 100%; display: flex; justify-content: center; margin-bottom: 20px; flex-shrink: 0; }
         .meta-info { order: 2; width: 100%; text-align: center; margin-bottom: 10px; flex-shrink: 0; }
         .lyrics-side { 
             order: 3; flex: 1; min-height: 0; position: relative; width: 100%;
             margin-bottom: 20px;
+            /* スクロールロック機能 */
+            overflow: hidden; touch-action: pan-y;
             mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
             -webkit-mask-image: linear-gradient(to bottom, transparent 0%, black 15%, black 85%, transparent 100%);
         }
         .controls-area { order: 4; width: 100%; flex-shrink: 0; }
 
-        /* スマホ用アートワークサイズ */
+        /* アートワーク (スマホ向け) */
         #artwork-card {
             width: 65vw; height: 65vw; max-width: 280px; max-height: 280px; max-height: 32vh; aspect-ratio: 1/1;
-            border-radius: 12px; background-color: rgba(255,255,255,0.1);
+            border-radius: 12px; background-color: rgba(255,255,255,0.05);
             background-size: cover; background-position: center; box-shadow: 0 15px 40px rgba(0,0,0,0.4);
             transition: transform 0.5s var(--ease-apple);
         }
@@ -69,27 +74,14 @@
                 display: grid; grid-template-columns: 45% 55%; grid-template-rows: 100%;
                 padding: 60px 80px; gap: 80px; align-items: center;
             }
-            
-            .player-side {
-                display: flex; flex-direction: column; 
-                justify-content: center; align-items: center;
-                height: 100%; width: 100%; max-width: 500px; margin: 0 auto; order: 1;
-            }
-            
+            .player-side { order: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100%; width: 100%; max-width: 500px; margin: 0 auto; }
             .lyrics-side { order: 2; height: 100%; margin: 0; padding-left: 40px; }
             
-            /* PCでの順序リセット */
-            #artwork-wrapper { order: initial; margin-bottom: 40px; justify-content: center; width: 100%; }
-            .meta-info { order: initial; margin-bottom: 20px; width: 100%; text-align: left; padding-left: 5px; }
-            .controls-area { order: initial; width: 100%; margin-top: 0; }
-            
             /* PCサイズ調整 */
-            #artwork-card { width: 100% !important; aspect-ratio: 1/1; max-width: 400px; max-height: 400px; box-shadow: 0 40px 100px rgba(0,0,0,0.6); }
-            
-            /* 配置 */
+            #artwork-card { width: 100%; max-width: 380px; max-height: 380px; box-shadow: 0 40px 100px rgba(0,0,0,0.6); }
+            .meta-info { text-align: left; align-items: flex-start; padding-left: 5px; }
             .buttons-row { justify-content: flex-start !important; gap: 40px !important; margin-left: 10px; }
-            .volume-wrap { justify-content: center !important; } 
-            
+            .volume-wrap { justify-content: flex-start !important; max-width: 350px !important; margin-left: 0 !important; }
             #lyrics-list { text-align: left; padding-left: 20px; }
             .lyric-item { transform-origin: left center; font-size: 32px; }
             .lyric-item.active { font-size: 48px; transform: scale(1.02) translateX(10px); }
@@ -97,23 +89,20 @@
 
         /* --- 共通パーツ --- */
         
-        #artwork-card.playing { transform: scale(1.03); }
-
         .meta-info { display: flex; flex-direction: column; gap: 4px; }
-        #song-title { font-size: 24px; font-weight: 700; line-height: 1.2; letter-spacing: -0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        #artist-name { font-size: 18px; color: var(--text-sub); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        #song-title { font-size: 24px; font-weight: 700; line-height: 1.2; letter-spacing: -0.01em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        #artist-name { font-size: 16px; color: var(--text-sub); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
         /* 歌詞リスト */
         #lyrics-list {
             list-style: none; padding: 0; margin: 0; width: 100%; height: 100%; 
-            overflow-y: auto; overscroll-behavior-y: contain; 
-            -webkit-overflow-scrolling: touch; text-align: center;
-            scrollbar-width: none; -ms-overflow-style: none;
+            overflow-y: auto; overscroll-behavior-y: contain; -webkit-overflow-scrolling: touch;
+            text-align: center; scrollbar-width: none; -ms-overflow-style: none;
         }
         #lyrics-list::-webkit-scrollbar { display: none; }
 
         .lyric-item {
-            font-size: clamp(20px, 5vw, 24px); font-weight: 700; line-height: 1.5;
+            font-size: clamp(20px, 5vw, 24px); font-weight: 700; line-height: 1.6;
             color: rgba(255,255,255,0.3); margin: 16px 0; cursor: pointer;
             transition: all 0.4s ease; transform-origin: center center;
             word-wrap: break-word; overflow-wrap: break-word; padding: 0 10px;
@@ -129,14 +118,10 @@
         /* コントロール */
         .progress-area { width: 100%; margin-bottom: 8px; margin-top: 0; }
         .progress-wrap { width: 100%; height: 30px; display: flex; align-items: center; cursor: pointer; }
-        
-        input[type="range"] {
-            -webkit-appearance: none; width: 100%; background: transparent;
-            height: 100%; margin: 0; padding: 0; cursor: pointer; position: relative; z-index: 2; --p: 0%;
-        }
+        input[type="range"] { -webkit-appearance: none; width: 100%; background: transparent; height: 100%; margin: 0; padding: 0; cursor: pointer; position: relative; z-index: 2; --p: 0%; }
+        input[type="range"]:focus { outline: none; }
         input[type="range"]::-webkit-slider-runnable-track {
-            width: 100%; height: 4px; border-radius: 2px;
-            background: rgba(255, 255, 255, 0.15);
+            width: 100%; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, 0.15);
             background: linear-gradient(to right, #fff var(--p), rgba(255,255,255,0.15) var(--p));
             transition: height 0.2s;
         }
@@ -145,32 +130,12 @@
             background: transparent; transition: all 0.2s; box-shadow: none;
         }
         .progress-wrap:active input::-webkit-slider-runnable-track { height: 8px; border-radius: 4px; }
-        .progress-wrap:active input::-webkit-slider-thumb {
-            height: 20px; width: 8px; background: #fff; margin-top: -6px;
-            border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.5);
-        }
+        .progress-wrap:active input::-webkit-slider-thumb { height: 20px; width: 8px; background: #fff; margin-top: -6px; border-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,0.5); }
 
-        .time-labels { display: flex; justify-content: space-between; margin-top: -8px; font-size: 11px; color: var(--text-sub); font-weight: 600; font-variant-numeric: tabular-nums; }
-
-        /* ボタン */
-        .buttons-row {
-            display: flex; justify-content: space-between; align-items: center;
-            width: 100%; max-width: 320px; margin: 10px auto 0;
-        }
-        button { background: none; border: none; padding: 0; cursor: pointer; color: #fff; transition: transform 0.1s, opacity 0.2s; display: flex; align-items: center; justify-content: center; }
-        button:active { transform: scale(0.85); opacity: 0.7; }
-        
-        .skip-icon { width: 36px; height: 36px; fill: #fff; opacity: 0.9; }
-        #play-pause-btn { width: 70px; height: 70px; background: #fff; border-radius: 50%; box-shadow: 0 5px 20px rgba(0,0,0,0.3); color: #000; }
-        .play-icon { width: 32px; height: 32px; fill: #000; margin-left: 4px; }
-        #icon-pause.play-icon { margin-left: 0; }
-
-        /* ★音量バー (幅の確保とツマミの復活) */
+        /* 音量コントロール (ツマミ復活) */
         .volume-wrap {
-            display: flex; align-items: center; 
-            justify-content: center; 
-            gap: 15px; margin-top: 20px; opacity: 0.8;
-            width: 100%; /* 幅いっぱい確保 */
+            display: flex; align-items: center; justify-content: space-between; 
+            gap: 15px; margin-top: 25px; opacity: 0.8; width: 100%;
         }
         .vol-icon { width: 12px; fill: var(--text-sub); flex-shrink: 0; }
         
@@ -178,17 +143,13 @@
             -webkit-appearance: none; width: 100%; height: 30px; background: transparent; cursor: pointer;
             flex-grow: 1; /* ★利用可能なスペースを全て占有 */
         }
-        
-        /* トラック */
         input.vol-slider::-webkit-slider-runnable-track { height: 4px; border-radius: 2px; background: rgba(255,255,255,0.2); }
         
-        /* ★ツマミ（復活） */
         input.vol-slider::-webkit-slider-thumb {
-            -webkit-appearance: none; height: 20px; width: 20px;
+            -webkit-appearance: none; height: 20px; width: 20px; /* ★ツマミサイズ復活 */
             background: #fff; border-radius: 50%; margin-top: -8px;
             box-shadow: 0 2px 5px rgba(0,0,0,0.3); transform: scale(1);
         }
-        input.vol-slider:active::-webkit-slider-thumb { transform: scale(1.2); }
 
         #status-pill {
             position: absolute; top: 15px; right: 20px;
@@ -204,6 +165,7 @@
     <div id="status-pill">Waiting</div>
 
     <div class="container">
+        
         <div class="player-side">
             <div id="artwork-wrapper">
                 <div id="artwork-card"></div>
@@ -276,7 +238,7 @@
         const backdrop = document.getElementById('backdrop');
         
         let conn = null;
-        let peer = null; /* Peerはconfig付きで再定義 */
+        let peer = null; 
         let isDragging = false; 
         let autoScroll = true;
 
@@ -286,7 +248,9 @@
                 config: {
                     iceServers: [
                         { urls: 'stun:stun.l.google.com:19302' },
-                        { urls: 'stun:stun1.l.google.com:19302' }
+                        { urls: 'stun:stun1.l.google.com:19302' },
+                        { urls: 'stun:stun2.l.google.com:19302' },
+                        { urls: 'stun:stun3.l.google.com:19302' }
                     ]
                 }
             };
@@ -297,7 +261,7 @@
                 else statusPill.innerText = "NO ID";
             });
         }
-        setupPeer(); // 初期化実行
+        setupPeer();
 
         function connectToPC(id) {
             conn = peer.connect(id);
