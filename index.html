@@ -204,18 +204,17 @@
         .play-icon { width: 32px; height: 32px; fill: #000; margin-left: 4px; }
         #icon-pause.play-icon { margin-left: 0; }
 
-        /* ★音量バー (ここを修正：幅を100%にしてシークバーと合わせる) */
+        /* 音量バー */
         .volume-wrap {
             display: flex; align-items: center; justify-content: center; 
             gap: 15px; margin-top: 20px; opacity: 0.8; 
-            width: 100%; /* 幅いっぱい */
+            width: 100%;
         }
         .vol-icon { width: 12px; fill: var(--text-sub); }
         
-        /* 音量スライダー */
         input.vol-slider {
             -webkit-appearance: none; 
-            width: 100%; /* 親に合わせて伸縮 */
+            width: 100%;
             height: 30px; background: transparent; margin: 0; cursor: pointer;
         }
         
@@ -297,9 +296,7 @@
     </div>
 
     <script>
-        // ★スクロール完全ロック (JS)
         document.addEventListener('touchmove', function(e) {
-            // 歌詞リスト以外のタッチ移動は全て無効化
             if (!e.target.closest('#lyrics-list')) {
                 e.preventDefault();
             }
@@ -316,7 +313,21 @@
         const backdrop = document.getElementById('backdrop');
         
         let conn = null;
-        let peer = new Peer(); 
+        
+        // ★★★ 修正点: STUNサーバー設定を追加 ★★★
+        const peerConfig = {
+            config: {
+                iceServers: [
+                    { urls: 'stun:stun.l.google.com:19302' },
+                    { urls: 'stun:stun1.l.google.com:19302' },
+                    { urls: 'stun:stun2.l.google.com:19302' },
+                    { urls: 'stun:stun3.l.google.com:19302' }
+                ]
+            }
+        };
+        
+        // Peerの初期化時にconfigを渡す
+        let peer = new Peer(peerConfig); 
         let isDragging = false; 
         let currentLyricsData = [];
         let autoScroll = true;
