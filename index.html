@@ -27,7 +27,7 @@
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             object-fit: cover; z-index: -3;
             opacity: 0; transition: opacity 0.5s ease;
-            transform: scaleX(-1); /* 自撮り用反転（背面カメラならJSで解除） */
+            transform: scaleX(1); /* 背面カメラは反転しない */
         }
         
         /* --- 背景 (AR時は消える) --- */
@@ -308,33 +308,12 @@
             conn.on('error', () => statusPill.innerText = "ERROR");
         }
 
-        /* --- AR & Camera Logic --- */
+        /* --- AR & Camera Logic (iOS Fix) --- */
         async function toggleAR() {
             const btn = document.getElementById('ar-toggle-btn');
-            isAR = !isAR;
-
+            
+            // ■ AR終了処理
             if (isAR) {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ 
-                        video: { facingMode: "environment" } 
-                    });
-                    arVideo.srcObject = stream;
-                    arVideo.style.transform = "scaleX(1)"; // 背面カメラは反転しない
-                    document.body.classList.add('ar-active');
-                    btn.classList.add('active');
-                    btn.innerText = "CLOSE AR";
-                    
-                    // ジャイロセンサー許可（iOS 13+対応）
-                    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                        DeviceOrientationEvent.requestPermission().catch(e => console.log(e));
-                    }
-                    window.addEventListener('deviceorientation', handleParallax);
-                    
-                } catch (e) {
-                    alert("カメラを起動できませんでした: " + e.message);
-                    isAR = false;
-                }
-            } else {
                 const tracks = arVideo.srcObject?.getTracks();
                 if (tracks) tracks.forEach(track => track.stop());
                 arVideo.srcObject = null;
@@ -343,21 +322,64 @@
                 btn.innerText = "AR MODE";
                 window.removeEventListener('deviceorientation', handleParallax);
                 floatingLayer.style.transform = "none";
+                isAR = false;
+                return;
+            }
+
+            // ■ AR開始処理
+            try {
+                // 1. カメラストリームの取得
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { 
+                        facingMode: "environment",
+                        width: { ideal: 1920 },
+                        height: { ideal: 1080 }
+                    },
+                    audio: false
+                });
+                
+                arVideo.srcObject = stream;
+                
+                // 2. iOS Safari対策: メタデータ読み込み後に明示的に再生
+                arVideo.onloadedmetadata = () => {
+                    arVideo.play().catch(e => alert("ビデオ再生エラー: " + e.message));
+                };
+
+                arVideo.style.transform = "scaleX(1)";
+                document.body.classList.add('ar-active');
+                btn.classList.add('active');
+                btn.innerText = "CLOSE AR";
+                isAR = true;
+                
+                // 3. ジャイロセンサー許可（iOS 13+対応）
+                if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                    try {
+                        const permission = await DeviceOrientationEvent.requestPermission();
+                        if (permission === 'granted') {
+                            window.addEventListener('deviceorientation', handleParallax);
+                        }
+                    } catch (e) {
+                        console.log("ジャイロ許可エラー:", e);
+                    }
+                } else {
+                    window.addEventListener('deviceorientation', handleParallax);
+                }
+                
+            } catch (e) {
+                alert("カメラ起動エラー:\n" + e.name + ": " + e.message + "\n※HTTPS接続(GitHub Pages等)が必要です");
+                isAR = false;
             }
         }
 
         // 疑似3D視差効果
         function handleParallax(e) {
             if(!isAR) return;
-            // 簡易的な傾き取得
-            const x = e.gamma || 0; // 横の傾き
-            const y = e.beta || 0;  // 縦の傾き
+            const x = e.gamma || 0; 
+            const y = e.beta || 0;  
             
-            // 基準値からの変化分を適用（もっと複雑な計算も可能ですが簡易版で）
-            // リミッターをかける
             const clamp = (num, min, max) => Math.min(Math.max(num, min), max);
             const moveX = clamp(x, -30, 30);
-            const moveY = clamp(y - 45, -30, 30); // 45度くらいで持っていると仮定
+            const moveY = clamp(y - 45, -30, 30); 
 
             floatingLayer.style.transform = `rotateY(${moveX}deg) rotateX(${-moveY}deg)`;
         }
