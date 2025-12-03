@@ -30,7 +30,6 @@
             touch-action: none; user-select: none; -webkit-user-select: none;
         }
 
-        /* --- 背景 (通常モード用) --- */
         #backdrop {
             position: absolute; inset: -20px; z-index: -2;
             background-color: #111;
@@ -38,81 +37,62 @@
             filter: blur(80px) brightness(0.4);
             transition: opacity 0.5s;
         }
-
-        /* --- AR用 ビデオ背景 --- */
         #ar-video {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             object-fit: cover; z-index: -3;
             opacity: 0; transition: opacity 0.5s;
         }
-
-        /* --- 3D描画レイヤー (CSS3DRenderer) --- */
         #css-world {
             position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: 1; pointer-events: none; /* 3D操作はしないのでパススルー */
+            z-index: 1; pointer-events: none;
             opacity: 0; transition: opacity 0.5s;
         }
 
-        /* --- 2D UI (通常モード) --- */
+        /* UI Layer */
         #ui-2d-container {
             position: absolute; inset: 0; z-index: 10;
             display: flex; flex-direction: column;
             padding: max(20px, env(safe-area-inset-top)) 24px max(30px, env(safe-area-inset-bottom)) 24px;
             transition: opacity 0.5s, transform 0.5s;
-            background: rgba(0,0,0,0.4); /* 少し暗くする */
+            background: rgba(0,0,0,0.4);
         }
 
-        /* --- ARモード時の状態変化 --- */
+        /* AR Active State */
         body.ar-active #backdrop { opacity: 0; }
         body.ar-active #ar-video { opacity: 1; }
         body.ar-active #css-world { opacity: 1; }
-        
-        /* AR時は2Dのジャケットと歌詞を消して、コントローラーだけ下に残す */
         body.ar-active #ui-2d-container {
-            background: transparent;
-            justify-content: flex-end; /* 下寄せ */
+            background: transparent; justify-content: flex-end;
         }
         body.ar-active #artwork-wrapper, 
         body.ar-active .meta-info, 
-        body.ar-active .lyrics-side {
-            display: none !important; /* 3D空間側に任せる */
-        }
+        body.ar-active .lyrics-side { display: none !important; }
         body.ar-active .controls-area {
-            margin-bottom: 40px;
-            background: rgba(0,0,0,0.5);
-            backdrop-filter: blur(20px);
-            padding: 20px;
-            border-radius: 24px;
-            border: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 40px; background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(20px); padding: 20px;
+            border-radius: 24px; border: 1px solid rgba(255,255,255,0.1);
         }
 
-        /* === 3D空間内の要素スタイル (CSS3DObject用) === */
+        /* 3D Objects */
         .ar-card {
             width: 300px; height: 300px;
             background-size: cover; background-position: center;
             border-radius: 20px;
-            box-shadow: 0 0 50px rgba(255,255,255,0.2), 0 0 100px rgba(0,0,0,0.5);
+            box-shadow: 0 0 50px rgba(255,255,255,0.2);
             border: 2px solid rgba(255,255,255,0.2);
-            /* 裏面が見えないように */
             backface-visibility: hidden; 
         }
-
         .ar-lyric-box {
-            width: 800px; /* 広めに */
-            text-align: center;
-            font-weight: 800;
+            width: 800px; text-align: center; font-weight: 800;
             color: rgba(255,255,255,0.2);
-            transition: color 0.3s, transform 0.3s, opacity 0.3s;
+            transition: all 0.3s;
             text-shadow: 0 0 10px rgba(0,0,0,0.5);
-            /* 重要: 文字をきれいに */
-            transform-style: preserve-3d;
         }
         .ar-lyric-box.active {
-            color: #fff;
-            text-shadow: 0 0 30px rgba(255,255,255,0.6);
+            color: #fff; text-shadow: 0 0 30px rgba(255,255,255,0.6);
         }
 
-        /* === 2D UI用スタイル (共通) === */
+        /* 2D Elements */
         #artwork-wrapper { flex: 0 0 auto; display: flex; justify-content: center; margin-bottom: 20px; }
         #artwork-card {
             width: 70vw; height: 70vw; max-width: 300px; max-height: 300px;
@@ -128,7 +108,7 @@
         .lyric-item { padding: 10px; color: rgba(255,255,255,0.3); font-weight: 700; font-size: 20px; transition: all 0.3s; }
         .lyric-item.active { color: #fff; transform: scale(1.1); text-shadow: 0 0 20px rgba(255,255,255,0.5); }
         
-        /* コントローラー */
+        /* Controls */
         .controls-area { width: 100%; }
         .progress-wrap input { width: 100%; }
         .buttons-row { display: flex; justify-content: space-between; align-items: center; max-width: 300px; margin: 10px auto; }
@@ -136,7 +116,6 @@
         .play-icon { width: 48px; height: 48px; fill: #fff; }
         .skip-icon { width: 32px; height: 32px; fill: #fff; }
 
-        /* AR切替ボタン */
         #ar-toggle-btn {
             position: absolute; top: 20px; right: 20px; z-index: 1000;
             background: rgba(40,40,40,0.6); backdrop-filter: blur(10px);
@@ -151,36 +130,38 @@
             font-size: 10px; font-weight: bold; background: rgba(0,0,0,0.5);
             padding: 4px 10px; border-radius: 10px; color: #aaa; z-index: 1000;
         }
+
+        /* デバッグログ表示用 (小さく左下に) */
+        #debug-log {
+            position: fixed; bottom: 0; left: 0; width: 100%; height: 100px;
+            background: rgba(0,0,0,0.8); color: #0f0; font-family: monospace;
+            font-size: 10px; overflow-y: scroll; pointer-events: none;
+            z-index: 9999; padding: 5px; display: none; /* 必要なら block に */
+        }
     </style>
 </head>
 <body>
     <video id="ar-video" autoplay playsinline muted></video>
-    
     <div id="backdrop"></div>
-    
     <div id="css-world"></div>
 
-    <div id="status-pill">Wait...</div>
+    <div id="status-pill">Init...</div>
     <button id="ar-toggle-btn">AR MODE</button>
+    <div id="debug-log"></div>
 
     <div class="container" id="ui-2d-container">
-        <div id="artwork-wrapper">
-            <div id="artwork-card"></div>
-        </div>
-
+        <div id="artwork-wrapper"><div id="artwork-card"></div></div>
         <div class="meta-info">
             <div id="song-title">Not Playing</div>
             <div id="artist-name">-</div>
         </div>
-
         <div class="lyrics-side">
             <ul id="lyrics-list">
                 <li style="height:40vh"></li>
-                <li class="lyric-item">Spatial Remote</li>
+                <li class="lyric-item">Immersion Remote</li>
                 <li style="height:40vh"></li>
             </ul>
         </div>
-
         <div class="controls-area">
             <div class="progress-area">
                 <input type="range" id="seek-bar" min="0" max="100" value="0" style="width:100%">
@@ -196,179 +177,103 @@
         </div>
     </div>
 
+    <script>
+        // デバッグログ関数
+        function log(msg) {
+            console.log(msg);
+            const d = document.getElementById('debug-log');
+            d.style.display = 'block'; // エラーが出たら表示
+            d.innerHTML = `<div>${msg}</div>` + d.innerHTML;
+        }
+
+        // グローバル変数
+        window.currentLyricsData = [];
+        window.currentImgUrl = "";
+        window.currentTitle = "";
+        window.isAR = false;
+        
+        // PeerJS接続処理
+        const statusPill = document.getElementById('status-pill');
+        const params = new URLSearchParams(window.location.search);
+        const targetId = params.get('id');
+
+        // UI更新関数 (Global)
+        window.updateUIFromData = (data) => {
+            // ここは後で定義するが、初期状態で空関数にしておく
+        };
+
+        if (!targetId) {
+            statusPill.innerText = "ERROR: NO ID";
+            log("URLに ?id=... がありません");
+        } else {
+            statusPill.innerText = "Connecting...";
+            const peer = new Peer({
+                config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
+            });
+
+            peer.on('open', (id) => {
+                log("My Peer ID: " + id);
+                const conn = peer.connect(targetId);
+                window.conn = conn; // グローバルに保存
+
+                conn.on('open', () => {
+                    statusPill.innerText = "CONNECTED";
+                    log("Connected to PC!");
+                    setTimeout(() => statusPill.style.opacity = 0, 3000);
+                });
+
+                conn.on('data', (data) => {
+                    // グローバルなUI更新関数を呼ぶ
+                    if(window.updateUIFromData) window.updateUIFromData(data);
+                });
+
+                conn.on('close', () => {
+                    statusPill.innerText = "DISCONNECTED";
+                    statusPill.style.opacity = 1;
+                    log("Connection Closed");
+                });
+                
+                conn.on('error', (err) => log("Conn Error: " + err));
+            });
+
+            peer.on('error', (err) => {
+                statusPill.innerText = "PEER ERROR";
+                log("Peer Error: " + err);
+            });
+        }
+
+        // 送信関数 (Global)
+        window.sendCommand = (cmd, val) => {
+            if (navigator.vibrate) navigator.vibrate(10);
+            if (window.conn && window.conn.open) {
+                window.conn.send({ command: cmd, value: val });
+            } else {
+                log("Not connected, cant send");
+            }
+        };
+    </script>
+
     <script type="module">
+        // ライブラリの読み込みに失敗しても通信だけは死なないようにtry-catchはできないが、
+        // 上のスクリプトが別なので通信は生きているはず。
         import * as THREE from 'three';
         import { CSS3DRenderer, CSS3DObject } from 'three/addons/renderers/CSS3DRenderer.js';
         import { DeviceOrientationControls } from 'three/addons/controls/DeviceOrientationControls.js';
 
-        // --- DOM Elements ---
         const arBtn = document.getElementById('ar-toggle-btn');
         const arVideo = document.getElementById('ar-video');
         const artworkCard2D = document.getElementById('artwork-card');
         const backdrop = document.getElementById('backdrop');
         const lyricsList2D = document.getElementById('lyrics-list');
-        const statusPill = document.getElementById('status-pill');
         
-        // --- State ---
-        let isAR = false;
-        let peer = null;
-        let conn = null;
-        let currentLyricsData = [];
-        let currentImgUrl = "";
-        let currentTitle = "";
-        
-        // --- Three.js Variables ---
+        // Three.js Variables
         let camera, scene, renderer, controls;
-        let arArtworkObj = null; // 3D空間のジャケット
-        let arLyricsGroup = new THREE.Group(); // 3D空間の歌詞グループ
-        let lyricObjects = []; // 歌詞行の配列
-        
-        // ==========================================
-        // 1. PeerJS Connection (既存ロジック)
-        // ==========================================
-        const params = new URLSearchParams(window.location.search);
-        const targetId = params.get('id');
+        let arArtworkObj = null;
+        let arLyricsGroup = new THREE.Group();
+        let lyricObjects = [];
 
-        peer = new Peer({
-            config: { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] }
-        });
-
-        peer.on('open', (id) => {
-            if (targetId) connectToPC(targetId);
-            else statusPill.innerText = "NO ID";
-        });
-
-        function connectToPC(id) {
-            conn = peer.connect(id);
-            conn.on('open', () => {
-                statusPill.innerText = "CONNECTED";
-                setTimeout(()=>statusPill.style.opacity=0, 3000);
-            });
-            conn.on('data', handleData);
-            conn.on('close', () => statusPill.innerText = "DISCONNECTED");
-        }
-
-        // ==========================================
-        // 2. Three.js Setup (3D空間の構築)
-        // ==========================================
-        function init3D() {
-            if (renderer) return; // 初期化済みならスキップ
-
-            const container = document.getElementById('css-world');
-            
-            // カメラ設定 (FOV 75, アスペクト比, 手前, 奥)
-            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 5000);
-            camera.position.set(0, 0, 0); // 自分は原点
-
-            // シーン
-            scene = new THREE.Scene();
-
-            // 空間レンダラー (HTML要素を3D表示する魔法のレンダラー)
-            renderer = new CSS3DRenderer();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-            container.appendChild(renderer.domElement);
-
-            // ジャイロコントロール (スマホの傾きでカメラを回す)
-            controls = new DeviceOrientationControls(camera);
-
-            // --- 3Dオブジェクト配置 ---
-            
-            // A. ジャケット (空間の前方 -Z方向 に配置)
-            const artDiv = document.createElement('div');
-            artDiv.className = 'ar-card';
-            if(currentImgUrl) artDiv.style.backgroundImage = `url('${currentImgUrl}')`;
-            
-            arArtworkObj = new CSS3DObject(artDiv);
-            arArtworkObj.position.set(0, 0, -600); // 目の前600px奥
-            scene.add(arArtworkObj);
-
-            // B. 歌詞グループ
-            arLyricsGroup.position.set(0, -400, -600); // ジャケットの下あたり
-            scene.add(arLyricsGroup);
-
-            // アニメーションループ開始
-            animate();
-        }
-
-        function animate() {
-            requestAnimationFrame(animate);
-            if (isAR && controls) {
-                controls.update(); // ジャイロ更新
-                renderer.render(scene, camera);
-            }
-        }
-
-        // ウィンドウリサイズ対応
-        window.addEventListener('resize', () => {
-            if(!camera) return;
-            camera.aspect = window.innerWidth / window.innerHeight;
-            camera.updateProjectionMatrix();
-            renderer.setSize(window.innerWidth, window.innerHeight);
-        });
-
-        // ==========================================
-        // 3. AR Toggle Logic
-        // ==========================================
-        arBtn.addEventListener('click', async () => {
-            if (isAR) {
-                // OFFにする
-                stopAR();
-            } else {
-                // ONにする
-                startAR();
-            }
-        });
-
-        async function startAR() {
-            try {
-                // ジャイロ許可 (iOS必須)
-                if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                    const permission = await DeviceOrientationEvent.requestPermission();
-                    if (permission !== 'granted') {
-                        alert("ジャイロセンサーを許可しないと空間ARは動きません。");
-                        return;
-                    }
-                }
-
-                // カメラ起動
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: "environment", width: { ideal: 1280 } }, audio: false
-                });
-                arVideo.srcObject = stream;
-                arVideo.onloadedmetadata = () => arVideo.play();
-
-                // 3D初期化
-                init3D();
-                
-                // 初回のデータ反映 (2Dで保持していたものを3Dへ)
-                update3DArtwork(currentImgUrl);
-                update3DLyrics(currentLyricsData);
-
-                document.body.classList.add('ar-active');
-                arBtn.classList.add('active');
-                arBtn.innerText = "CLOSE AR";
-                isAR = true;
-
-            } catch(e) {
-                alert("AR起動エラー: " + e.message + "\n(HTTPS接続を確認してください)");
-            }
-        }
-
-        function stopAR() {
-            const tracks = arVideo.srcObject?.getTracks();
-            if(tracks) tracks.forEach(t => t.stop());
-            arVideo.srcObject = null;
-
-            document.body.classList.remove('ar-active');
-            arBtn.classList.remove('active');
-            arBtn.innerText = "AR MODE";
-            isAR = false;
-        }
-
-        // ==========================================
-        // 4. Data Handling & UI Updates
-        // ==========================================
-        function handleData(data) {
+        // --- UI更新ロジック (通信から呼ばれる) ---
+        window.updateUIFromData = (data) => {
             if (data.type === 'time') {
                 document.getElementById('seek-bar').value = data.current;
                 document.getElementById('seek-bar').max = data.duration;
@@ -390,16 +295,15 @@
                     pauseIcon.style.display = 'none';
                 }
 
-                if (data.thumbnail && data.thumbnail !== currentImgUrl) {
-                    currentImgUrl = data.thumbnail;
+                if (data.thumbnail && data.thumbnail !== window.currentImgUrl) {
+                    window.currentImgUrl = data.thumbnail;
                     artworkCard2D.style.backgroundImage = `url('${data.thumbnail}')`;
                     backdrop.style.backgroundImage = `url('${data.thumbnail}')`;
-                    // 3D側も更新
                     update3DArtwork(data.thumbnail);
                 }
 
                 if (data.allLyrics) {
-                    currentLyricsData = data.allLyrics;
+                    window.currentLyricsData = data.allLyrics;
                     render2DLyrics(data.allLyrics);
                     update3DLyrics(data.allLyrics);
                 }
@@ -409,9 +313,9 @@
                 highlight2DLyric(data.index);
                 highlight3DLyric(data.index);
             }
-        }
+        };
 
-        // --- 2D Lyrics Logic ---
+        // --- 2D Helpers ---
         function render2DLyrics(lyrics) {
             lyricsList2D.innerHTML = '<li style="height:40vh"></li>';
             lyrics.forEach((line, i) => {
@@ -419,7 +323,7 @@
                 li.className = 'lyric-item';
                 li.id = `line2d-${i}`;
                 li.innerText = line.text;
-                li.onclick = () => sendCommand('scrub', line.time);
+                li.onclick = () => window.sendCommand('scrub', line.time);
                 lyricsList2D.appendChild(li);
             });
             lyricsList2D.innerHTML += '<li style="height:40vh"></li>';
@@ -431,89 +335,131 @@
             const next = document.getElementById(`line2d-${index}`);
             if(next) {
                 next.classList.add('active');
-                if(!isAR) { // AR中はスクロールさせない
+                if(!window.isAR) {
                     next.scrollIntoView({behavior: "smooth", block: "center"});
                 }
             }
         }
 
-        // --- 3D Lyrics Logic (The Core of Spatial AR) ---
-        function update3DArtwork(url) {
-            if(arArtworkObj && url) {
-                arArtworkObj.element.style.backgroundImage = `url('${url}')`;
+        // --- 3D / AR Logic ---
+        function init3D() {
+            if (renderer) return;
+            const container = document.getElementById('css-world');
+            camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 1, 5000);
+            camera.position.set(0, 0, 0);
+            scene = new THREE.Scene();
+            renderer = new CSS3DRenderer();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            container.appendChild(renderer.domElement);
+            controls = new DeviceOrientationControls(camera);
+
+            // Artwork
+            const artDiv = document.createElement('div');
+            artDiv.className = 'ar-card';
+            if(window.currentImgUrl) artDiv.style.backgroundImage = `url('${window.currentImgUrl}')`;
+            arArtworkObj = new CSS3DObject(artDiv);
+            arArtworkObj.position.set(0, 0, -600);
+            scene.add(arArtworkObj);
+
+            // Lyrics
+            arLyricsGroup.position.set(0, -400, -600);
+            scene.add(arLyricsGroup);
+
+            animate();
+        }
+
+        function animate() {
+            requestAnimationFrame(animate);
+            if (window.isAR && controls) {
+                controls.update();
+                renderer.render(scene, camera);
             }
         }
 
-        function update3DLyrics(lyrics) {
-            // 既存の歌詞を削除
-            for(let i=arLyricsGroup.children.length-1; i>=0; i--){
-                arLyricsGroup.remove(arLyricsGroup.children[i]);
+        window.addEventListener('resize', () => {
+            if(!camera) return;
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        });
+
+        // Toggle AR
+        arBtn.addEventListener('click', async () => {
+            if (window.isAR) {
+                const tracks = arVideo.srcObject?.getTracks();
+                if(tracks) tracks.forEach(t => t.stop());
+                arVideo.srcObject = null;
+                document.body.classList.remove('ar-active');
+                arBtn.classList.remove('active');
+                arBtn.innerText = "AR MODE";
+                window.isAR = false;
+            } else {
+                try {
+                    // iOS Permission
+                    if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                        const permission = await DeviceOrientationEvent.requestPermission();
+                        if (permission !== 'granted') return alert("ジャイロが必要です");
+                    }
+                    // Camera
+                    const stream = await navigator.mediaDevices.getUserMedia({
+                        video: { facingMode: "environment", width: { ideal: 1280 } }, audio: false
+                    });
+                    arVideo.srcObject = stream;
+                    arVideo.onloadedmetadata = () => arVideo.play();
+
+                    init3D();
+                    update3DArtwork(window.currentImgUrl);
+                    update3DLyrics(window.currentLyricsData);
+
+                    document.body.classList.add('ar-active');
+                    arBtn.classList.add('active');
+                    arBtn.innerText = "CLOSE AR";
+                    window.isAR = true;
+                } catch(e) {
+                    alert("AR Error: " + e.message);
+                }
             }
+        });
+
+        // 3D Helpers
+        function update3DArtwork(url) {
+            if(arArtworkObj && url) arArtworkObj.element.style.backgroundImage = `url('${url}')`;
+        }
+        function update3DLyrics(lyrics) {
+            for(let i=arLyricsGroup.children.length-1; i>=0; i--) arLyricsGroup.remove(arLyricsGroup.children[i]);
             lyricObjects = [];
-
             if(!lyrics) return;
-
             lyrics.forEach((line, i) => {
                 const el = document.createElement('div');
                 el.className = 'ar-lyric-box';
                 el.innerText = line.text;
-                
                 const obj = new CSS3DObject(el);
-                // 初期位置：全部奥に隠しておく、あるいは下方に並べる
-                // ここでは「らせん状」や「奥行きリスト」に並べるのがかっこいい
-                // シンプルに：Y軸に並べ、アクティブなものをZ軸手前に出す方式にする
-                obj.position.set(0, i * 100, 0); // 仮置き
-                
+                obj.position.set(0, i * 100, 0);
                 arLyricsGroup.add(obj);
                 lyricObjects.push(obj);
             });
         }
-
         function highlight3DLyric(index) {
             if(!lyricObjects[index]) return;
-
-            // 歌詞全体のアニメーション更新
             lyricObjects.forEach((obj, i) => {
                 const el = obj.element;
-                const dist = i - index; // 現在行からの距離
-
-                // スタイルリセット
+                const dist = i - index;
                 el.classList.remove('active');
-                
-                // 3D配置の方程式: 
-                // 現在行(dist=0): ジャケットのすぐ下 (Y=-250), 手前 (Z=0)
-                // 次の行(dist=1): その下 (Y=-350), 少し奥 (Z=-200)
-                // 前の行(dist=-1): その上 (Y=-150), 少し奥 (Z=-200), 透明度下げる
-                
                 if (dist === 0) {
-                    // Active Line
                     el.classList.add('active');
-                    obj.position.set(0, -250, 50); // 手前に飛び出す
+                    obj.position.set(0, -250, 50);
                     obj.rotation.x = 0;
                     el.style.opacity = 1;
                     el.style.fontSize = "40px";
                 } else {
-                    // Other Lines
-                    // 距離に応じてY軸に広げつつ、Z軸奥へ、X軸回転で「反る」感じに
                     obj.position.set(0, -250 - (dist * 120), -200 - (Math.abs(dist) * 100));
-                    obj.rotation.x = dist * 0.1; // 少しカーブさせる
-                    
-                    // 遠すぎると消す
+                    obj.rotation.x = dist * 0.1;
                     if(Math.abs(dist) > 5) el.style.opacity = 0;
                     else el.style.opacity = 0.4 - (Math.abs(dist) * 0.05);
-                    
                     el.style.fontSize = "24px";
                 }
             });
         }
-
-        // ==========================================
-        // 5. Global Command Helper
-        // ==========================================
-        window.sendCommand = (cmd, val) => {
-            if (navigator.vibrate) navigator.vibrate(10);
-            if (conn && conn.open) conn.send({ command: cmd, value: val });
-        };
     </script>
 </body>
 </html>
